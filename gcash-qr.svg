@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 260 260" role="img" aria-label="GCash QR placeholder">
+  <rect width="260" height="260" fill="#ffffff"/>
+  <rect x="8" y="8" width="72" height="72" fill="#007cff"/>
+  <rect x="20" y="20" width="48" height="48" fill="#ffffff"/>
+  <rect x="32" y="32" width="24" height="24" fill="#007cff"/>
+  <rect x="180" y="8" width="72" height="72" fill="#007cff"/>
+  <rect x="192" y="20" width="48" height="48" fill="#ffffff"/>
+  <rect x="204" y="32" width="24" height="24" fill="#007cff"/>
+  <rect x="8" y="180" width="72" height="72" fill="#007cff"/>
+  <rect x="20" y="192" width="48" height="48" fill="#ffffff"/>
+  <rect x="32" y="204" width="24" height="24" fill="#007cff"/>
+  <g fill="#111111">
+    <rect x="96" y="16" width="8" height="8"/><rect x="112" y="16" width="8" height="8"/><rect x="128" y="16" width="8" height="8"/>
+    <rect x="96" y="32" width="8" height="8"/><rect x="144" y="32" width="8" height="8"/><rect x="160" y="32" width="8" height="8"/>
+    <rect x="96" y="96" width="8" height="8"/><rect x="112" y="96" width="8" height="8"/><rect x="128" y="96" width="8" height="8"/>
+    <rect x="144" y="96" width="8" height="8"/><rect x="160" y="96" width="8" height="8"/><rect x="176" y="96" width="8" height="8"/>
+    <rect x="96" y="112" width="8" height="8"/><rect x="128" y="112" width="8" height="8"/><rect x="160" y="112" width="8" height="8"/>
+    <rect x="96" y="128" width="8" height="8"/><rect x="112" y="128" width="8" height="8"/><rect x="144" y="128" width="8" height="8"/>
+    <rect x="96" y="144" width="8" height="8"/><rect x="128" y="144" width="8" height="8"/><rect x="176" y="144" width="8" height="8"/>
+    <rect x="96" y="160" width="8" height="8"/><rect x="112" y="160" width="8" height="8"/><rect x="160" y="160" width="8" height="8"/>
+    <rect x="96" y="176" width="8" height="8"/><rect x="144" y="176" width="8" height="8"/><rect x="176" y="176" width="8" height="8"/>
+    <rect x="96" y="192" width="8" height="8"/><rect x="128" y="192" width="8" height="8"/><rect x="160" y="192" width="8" height="8"/>
+    <rect x="96" y="208" width="8" height="8"/><rect x="112" y="208" width="8" height="8"/><rect x="144" y="208" width="8" height="8"/>
+    <rect x="96" y="224" width="8" height="8"/><rect x="128" y="224" width="8" height="8"/><rect x="176" y="224" width="8" height="8"/>
+  </g>
+  <text x="130" y="252" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#007cff">Replace with your GCash QR</text>
+</svg>
