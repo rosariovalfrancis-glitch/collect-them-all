@@ -2,7 +2,8 @@
 // ============================================================
 // place-order.php
 // Saves a new order from the checkout form to the database.
-// Called by the frontend via fetch POST.
+// The frontend generates the order number and sends it here.
+// Called via POST from app.js submitOrderToAPI().
 // ============================================================
 
 require_once __DIR__ . '/config.php';
@@ -21,7 +22,7 @@ if (!$input) {
 }
 
 // --- Validate required fields ---
-$required = ['customerName', 'contactNumber', 'items', 'total'];
+$required = ['orderNumber', 'customerName', 'contactNumber', 'items', 'total'];
 foreach ($required as $field) {
     if (empty($input[$field])) {
         http_response_code(400);
@@ -36,8 +37,7 @@ if (!is_array($input['items']) || count($input['items']) === 0) {
     exit;
 }
 
-// --- Build order data ---
-$orderNumber = substr((string) round(microtime(true) * 1000), -6);
+$orderNumber = $input['orderNumber'];
 
 $db = getDB();
 $db->beginTransaction();
@@ -72,8 +72,6 @@ try {
         ':status'           => 'Waiting for Payment',
     ]);
 
-    $orderNumber = $db->lastInsertId();
-
     // 2) Insert each line item
     $stmtItem = $db->prepare('
         INSERT INTO order_items (order_number, product_name, qty, type, line_total)
@@ -82,7 +80,7 @@ try {
 
     foreach ($input['items'] as $item) {
         $stmtItem->execute([
-            ':order_number' => $input['orderNumber'] ?? $orderNumber,
+            ':order_number' => $orderNumber,
             ':product_name' => $item['name'],
             ':qty'          => (int) ($item['qty'] ?? 1),
             ':type'         => $item['type'] ?? 'Unit',
@@ -95,7 +93,7 @@ try {
     http_response_code(201);
     echo json_encode([
         'success'      => true,
-        'order_number' => $input['orderNumber'] ?? $orderNumber,
+        'order_number' => $orderNumber,
         'message'      => 'Order placed successfully!',
     ]);
 
