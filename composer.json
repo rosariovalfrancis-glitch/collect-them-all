@@ -1,0 +1,6 @@
+{
+    "name": "collect-them-all/backend",
+    "description": "Backend API for Collect Them All Pokemon TCG shop",
+    "type": "project",
+    "require": {}
+}
