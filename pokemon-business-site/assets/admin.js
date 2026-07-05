@@ -422,15 +422,63 @@ function initAdminProductForm() {
   form.querySelector("[name='case_size']").addEventListener("input", updateCasePrice);
 
   const fileInput = form.querySelector("[name='image_upload']");
+  const uploadBtn = form.querySelector("[data-upload-image]");
+  const imageField = form.querySelector("[name='image']");
+
+  // When a file is selected, show a preview that it's ready to upload
   if (fileInput) {
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        form.querySelector("[name='image']").value = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      // Show the filename as a hint in the image field
+      const hint = "(ready to upload: " + file.name + ")";
+      imageField.placeholder = hint;
+    });
+  }
+
+  // Cloudinary upload button
+  if (uploadBtn && fileInput && imageField) {
+    uploadBtn.addEventListener("click", function () {
+      const file = fileInput.files[0];
+      if (!file) {
+        showToast("Select an image file first.");
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = "Uploading...";
+
+      var apiBase = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+      if (!apiBase) {
+        showToast("API base URL not configured in site-config.js");
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Upload ☁";
+        return;
+      }
+
+      var fd = new FormData();
+      fd.append("file", file);
+
+      fetch(apiBase + "/api/upload-image", {
+        method: "POST",
+        body: fd,
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            imageField.value = data.url;
+            showToast("Image uploaded to Cloudinary!");
+          } else {
+            showToast("Upload failed: " + (data.error || "Unknown error"));
+          }
+        })
+        .catch(function (err) {
+          showToast("Upload error: " + err.message);
+        })
+        .finally(function () {
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = "Upload ☁";
+        });
     });
   }
 

@@ -17,6 +17,10 @@ switch (true) {
         require __DIR__ . '/place-order.php';
         break;
 
+    case $path === '/api/upload-image' || $path === '/api/upload-image.php':
+        require __DIR__ . '/upload-image.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode([
@@ -24,6 +28,7 @@ switch (true) {
             'available_endpoints' => [
                 'GET /api/test-connection',
                 'POST /api/place-order',
+                'POST /api/upload-image',
             ],
         ]);
         break;

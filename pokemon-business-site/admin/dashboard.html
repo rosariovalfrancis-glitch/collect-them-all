@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Collect Them All</title>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/styles.css?v=3">
+  <link rel="stylesheet" href="../assets/styles.css?v=4">
   <link rel="stylesheet" href="../assets/admin.css">
-  <link rel="stylesheet" href="../assets/mobile.css?v=1">
+  <link rel="stylesheet" href="../assets/mobile.css?v=2">
 </head>
 <body>
   <div class="hero-starfield" style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;"></div>
@@ -71,9 +71,10 @@
             <input class="field" name="case_price" type="number" placeholder="Case Price" readonly style="display:none;cursor:default;opacity:0.7;">
             <select class="select" name="status"></select>
             <input class="field" name="closes_at" type="datetime-local" placeholder="Close time" style="display:none;">
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input class="field" name="image" placeholder="Image path (e.g. photos/charizard.png)" style="flex:1;min-width:0;">
-              <input type="file" name="image_upload" accept="image/*" style="font-size:0.8rem;flex-shrink:0;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input class="field" name="image" placeholder="Image path or Cloudinary URL" style="flex:1;min-width:160px;">
+              <input type="file" name="image_upload" accept="image/*" style="font-size:0.8rem;flex-shrink:0;max-width:140px;">
+              <button type="button" class="btn btn-sm btn-primary" data-upload-image style="white-space:nowrap;">Upload ☁</button>
             </div>
             <textarea class="textarea" name="description" rows="2" placeholder="Short description"></textarea>
             <button class="btn btn-yellow" type="submit">Add Product</button>
