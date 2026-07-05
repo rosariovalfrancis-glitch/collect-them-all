@@ -398,6 +398,7 @@ const DP_RATE = 0.3;
 const SITE = window.SITE_CONFIG || {};
 const MESSENGER_URL = SITE.messengerUrl || "https://m.me/YourPageName";
 const GCASH_QR_IMAGE = SITE.gcashQrImage || "assets/gcash-qr.svg";
+const API_BASE_URL = SITE.apiBaseUrl || "";
 
 function resolveAsset(path) {
   if (/^https?:\/\//.test(path) || path.startsWith("/")) return path;
@@ -416,6 +417,34 @@ function initSiteLinks() {
       document.querySelectorAll("[data-gcash-qr]").forEach((el) => {
         el.replaceWith(gcashQrMarkup());
       });
+
+  // Mobile nav toggle — insert hamburger button
+  var nav = document.querySelector(".site-nav");
+  if (nav && !nav.querySelector(".nav-toggle")) {
+    var btn = document.createElement("button");
+    btn.className = "nav-toggle";
+    btn.setAttribute("aria-label", "Menu");
+    btn.innerHTML = "☰";
+    btn.addEventListener("click", function () {
+      nav.classList.toggle("nav-open");
+      btn.classList.toggle("active");
+      btn.innerHTML = nav.classList.contains("nav-open") ? "✕" : "☰";
+    });
+    // Insert before .nav-right or at end of nav
+    var nr = nav.querySelector(".nav-right");
+    if (nr) { nav.insertBefore(btn, nr); }
+    else { nav.appendChild(btn); }
+  }
+
+  // Mobile dropdown toggle — tap to open on touch devices
+  document.querySelectorAll(".nav-dropdown > a").forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      if (window.innerWidth <= 880) {
+        e.preventDefault();
+        this.parentNode.classList.toggle("open");
+      }
+    });
+  });
 }
 
 const peso = new Intl.NumberFormat("en-PH", {
@@ -1275,6 +1304,22 @@ function createOrderNumber() {
   return String(Date.now()).slice(-6);
 }
 
+function submitOrderToAPI(orderData) {
+  if (!API_BASE_URL) return;
+  fetch(API_BASE_URL + "/api/place-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(orderData),
+  })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!data.success) console.warn("Order saved locally but DB sync failed:", data.error);
+    })
+    .catch(function (err) {
+      console.warn("Order saved locally but could not reach backend:", err.message);
+    });
+}
+
 /* ─── roundRect helper ─── */
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -1663,6 +1708,23 @@ function handleCheckout() {
     localStorage.setItem("collectOrders", JSON.stringify(saved));
     saveCart([]);
     showCheckoutSuccess(orderNumber, customerName, contactNumber, details, total, deliveryAddress, rows, notes);
+    // Send order to database backend (non-blocking — local save already done)
+    submitOrderToAPI({
+      orderNumber: orderNumber,
+      customerName: customerName,
+      contactNumber: contactNumber,
+      customerEmail: customerEmail,
+      paymentMethod: paymentMethod,
+      deliveryAddress: deliveryAddress,
+      province: province,
+      city: city,
+      barangay: barangay,
+      apartment: apartment,
+      zip: zip,
+      notes: notes,
+      total: total,
+      items: items,
+    });
   });
 }
 
