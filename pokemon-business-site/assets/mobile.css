@@ -31,6 +31,7 @@
 
   .site-nav {
     flex-wrap: wrap;
+    flex-direction: row;
     padding: 10px 16px;
     min-height: 56px;
     gap: 0;
