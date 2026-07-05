@@ -90,6 +90,10 @@ try {
 
     $db->commit();
 
+    // Send order confirmation email (non-blocking — order is already saved)
+    require_once __DIR__ . '/send-email.php';
+    sendOrderConfirmation($input);
+
     http_response_code(201);
     echo json_encode([
         'success'      => true,
