@@ -20,6 +20,11 @@
   --red: #ef5350;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   min-height: 100vh;
   font-family: Poppins, Arial, sans-serif;
@@ -701,6 +706,7 @@ h3 {
 .featured-expansion {
   padding: 0 48px 60px;
   position: relative;
+  overflow: hidden;
 }
 
 .featured-expansion::before {
@@ -2178,26 +2184,6 @@ select.select option {
 }
 
 @media (max-width: 880px) {
-  .site-nav {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 18px 20px;
-  }
-
-  .nav-right {
-    justify-content: flex-start;
-    width: 100%;
-  }
-
-  .nav-links {
-    flex-wrap: wrap;
-  }
-
-  .nav-dropdown-menu {
-    left: 0;
-    transform: none;
-  }
-
   .hero,
   .detail-layout,
   .checkout-layout,

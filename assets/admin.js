@@ -36,40 +36,13 @@ function switchTab(name) {
   else if (name === "products") renderAdminProducts();
 }
 
-function getAdminCredentials() {
-  const stored = localStorage.getItem("collectAdminCreds");
-  if (stored) {
-    try { return JSON.parse(stored); } catch { /* fall through */ }
-  }
-  return { user: "admin", pass: "admin1234" };
-}
-
-function saveAdminCredentials(user, pass) {
-  localStorage.setItem("collectAdminCreds", JSON.stringify({ user, pass }));
-}
-
-function initAdminLogin() {
-  const form = document.querySelector("[data-admin-login-form]");
-  if (!form) return;
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const data = new FormData(form);
-    const creds = getAdminCredentials();
-    if (data.get("username") === creds.user && data.get("password") === creds.pass) {
-      sessionStorage.setItem("collectAdminAuth", "true");
-      requireAdmin();
-    } else {
-      showToast("Invalid username or password.");
-    }
-  });
-}
-
 function initAdminLogout() {
   const btn = document.querySelector("[data-admin-logout-btn]");
   if (!btn) return;
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     sessionStorage.removeItem("collectAdminAuth");
+    localStorage.removeItem("collectCurrentUser");
     requireAdmin();
   });
 }
@@ -422,15 +395,63 @@ function initAdminProductForm() {
   form.querySelector("[name='case_size']").addEventListener("input", updateCasePrice);
 
   const fileInput = form.querySelector("[name='image_upload']");
+  const uploadBtn = form.querySelector("[data-upload-image]");
+  const imageField = form.querySelector("[name='image']");
+
+  // When a file is selected, show a preview that it's ready to upload
   if (fileInput) {
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        form.querySelector("[name='image']").value = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      // Show the filename as a hint in the image field
+      const hint = "(ready to upload: " + file.name + ")";
+      imageField.placeholder = hint;
+    });
+  }
+
+  // Cloudinary upload button
+  if (uploadBtn && fileInput && imageField) {
+    uploadBtn.addEventListener("click", function () {
+      const file = fileInput.files[0];
+      if (!file) {
+        showToast("Select an image file first.");
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = "Uploading...";
+
+      var apiBase = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+      if (!apiBase) {
+        showToast("API base URL not configured in site-config.js");
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Upload ☁";
+        return;
+      }
+
+      var fd = new FormData();
+      fd.append("file", file);
+
+      fetch(apiBase + "/api/upload-image", {
+        method: "POST",
+        body: fd,
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            imageField.value = data.url;
+            showToast("Image uploaded to Cloudinary!");
+          } else {
+            showToast("Upload failed: " + (data.error || "Unknown error"));
+          }
+        })
+        .catch(function (err) {
+          showToast("Upload error: " + err.message);
+        })
+        .finally(function () {
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = "Upload ☁";
+        });
     });
   }
 
@@ -732,7 +753,6 @@ function clearAllData() {
   localStorage.removeItem("collectCart");
   localStorage.removeItem("collectExpansions");
   localStorage.removeItem("collectHomeConfig");
-  localStorage.removeItem("collectAdminCreds");
   localStorage.removeItem("collectCurrentUser");
   location.reload();
 }
@@ -740,28 +760,15 @@ function clearAllData() {
 function renderAdminSettings() {
   const target = document.querySelector("[data-admin-settings]");
   if (!target) return;
-  const creds = getAdminCredentials();
+  const user = getCurrentUser();
+  const email = user ? user.email : "(not logged in)";
   target.innerHTML = `
-    <form data-admin-settings-form style="display:grid;gap:12px;max-width:400px;">
-      <input class="field" name="admin_user" value="${creds.user}" type="text" placeholder="Email or username" autocomplete="email" required>
-      <input class="field" name="admin_pass" type="password" value="${creds.pass}" placeholder="Password" required>
-      <p class="form-help">Changes take effect immediately. Log out to test new credentials.</p>
-      <button class="btn btn-yellow" type="submit">Save Credentials</button>
-    </form>
+    <div style="display:grid;gap:12px;max-width:400px;">
+      <p><strong>Logged in as:</strong> ${email}</p>
+      <p class="form-help">Admin access is tied to your database account. To change credentials, use the <a href="../login.html">login page</a>.</p>
+    </div>
     <div style="text-align:right;margin-top:16px;"><button class="btn btn-outline" onclick="clearAllData()" style="color:var(--red);border-color:rgba(239,83,80,0.3);">Reset All Data</button></div>
   `;
-  const form = target.querySelector("[data-admin-settings-form]");
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const data = new FormData(form);
-      const user = data.get("admin_user").trim();
-      const pass = data.get("admin_pass").trim();
-      if (!user || !pass) { alert("Both fields are required."); return; }
-      saveAdminCredentials(user, pass);
-      alert("Credentials saved.");
-    });
-  }
 }
 
 document.addEventListener("change", (e) => {

@@ -1226,52 +1226,117 @@ function apiPost(path, body) {
 function handleAuthForms() {
   var self = this;
 
-  // ─── Register ───
+  // ─── Register (two-step: send code, then verify + create) ───
   var registerForm = document.querySelector("[data-register-form]");
   if (registerForm) {
+    var step1 = registerForm.querySelector("[data-register-step1]");
+    var step2 = registerForm.querySelector("[data-register-step2]");
+
     registerForm.addEventListener("submit", function (event) {
       event.preventDefault();
       var fd = new FormData(registerForm);
-      var name = fd.get("full_name").trim();
-      var email = fd.get("email").trim().toLowerCase();
-      var password = fd.get("password") || "";
+      var name = fd.get("full_name");
+      var email = fd.get("email");
+      var password = fd.get("password");
+      var code = fd.get("code");
 
-      if (!name || !email || !password) { showToast("All fields are required."); return; }
+      // Step 1 → send verification code
+      if (!code) {
+        name = (name || "").trim();
+        email = (email || "").trim().toLowerCase();
+        password = password || "";
+        if (!name || !email || !password) { showToast("All fields are required."); return; }
+
+        var btn = registerForm.querySelector("button[type='submit']");
+        if (btn) { btn.disabled = true; btn.textContent = "Sending code..."; }
+
+        apiPost("/api/send-code", { email: email })
+          .then(function (data) {
+            if (data.success) {
+              // Show step 2, hide step 1
+              if (step1) step1.style.display = "none";
+              if (step2) {
+                step2.style.display = "";
+                step2.querySelector("input[name='code']").focus();
+                // Store name/email/password in hidden fields for step 2
+                step2.querySelector("input[name='code']").dataset.email = email;
+                step2.querySelector("input[name='code']").dataset.name = name;
+                step2.querySelector("input[name='code']").dataset.password = password;
+              }
+              showToast(data.message || "Verification code sent to your email.");
+            } else {
+              showToast(data.error || "Failed to send code.");
+            }
+            if (btn) { btn.disabled = false; btn.textContent = "Create Account"; }
+          })
+          .catch(function (err) {
+            console.error("send-code error:", err);
+            showToast("Cannot reach server. Check API_BASE_URL.");
+            if (btn) { btn.disabled = false; btn.textContent = "Create Account"; }
+          });
+        return;
+      }
+
+      // Step 2 → verify code and create account
+      code = code.trim();
+      var holder = registerForm.querySelector("input[name='code']");
+      email = holder.dataset.email || "";
+      name = holder.dataset.name || "";
+      password = holder.dataset.password || "";
+
+      if (!code || !email) { showToast("Please enter the verification code."); return; }
 
       var btn = registerForm.querySelector("button[type='submit']");
-      if (btn) btn.disabled = true;
+      if (btn) { btn.disabled = true; btn.textContent = "Verifying..."; }
 
-      function finishLogin(u) {
-        var users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
-        if (!users.some(function (x) { return x.email === u.email; })) {
-          users.push({ name: u.name, email: u.email, password: password });
-          localStorage.setItem("collectUsers", JSON.stringify(users));
-        }
-        saveCurrentUser(u);
-        showToast("Account created! Your orders will appear automatically on the Orders page.");
-        location.href = "index.html";
-      }
-
-      function saveLocalFallback() {
-        finishLogin({ name: name, email: email });
-      }
-
-      // Try database first
-      apiPost("/api/register", { name: name, email: email, password: password })
+      apiPost("/api/register", { name: name, email: email, password: password, code: code })
         .then(function (data) {
+          console.log("register API response:", data);
           if (data.success) {
-            finishLogin({ name: data.user.name, email: data.user.email });
-          } else if (data.error && data.error.indexOf("already") !== -1) {
-            showToast(data.error);
-            if (btn) btn.disabled = false;
+            // Save to localStorage (backup)
+            var users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
+            if (!users.some(function (x) { return x.email === email; })) {
+              users.push({ name: data.user.name, email: data.user.email, password: password });
+              localStorage.setItem("collectUsers", JSON.stringify(users));
+            }
+            saveCurrentUser({ name: data.user.name, email: data.user.email });
+            showToast("Account created! Your orders will appear automatically on the Orders page.");
+            location.href = "index.html";
           } else {
-            saveLocalFallback();
+            showToast(data.error || "Verification failed.");
+            if (btn) { btn.disabled = false; btn.textContent = "Verify & Complete"; }
           }
         })
-        .catch(function () {
-          saveLocalFallback();
+        .catch(function (err) {
+          console.error("register API network error:", err);
+          showToast("Cannot reach server. Try again.");
+          if (btn) { btn.disabled = false; btn.textContent = "Verify & Complete"; }
         });
     });
+
+    // Resend code button
+    var resendBtn = registerForm.querySelector("[data-resend-code]");
+    if (resendBtn) {
+      resendBtn.addEventListener("click", function () {
+        var holder = registerForm.querySelector("input[name='code']");
+        var email = holder ? (holder.dataset.email || "") : "";
+        if (!email) { showToast("No email to resend to."); return; }
+        resendBtn.disabled = true;
+        var orig = resendBtn.textContent;
+        resendBtn.textContent = "Sending...";
+        apiPost("/api/send-code", { email: email })
+          .then(function (data) {
+            showToast(data.message || "Code resent.");
+          })
+          .catch(function () {
+            showToast("Failed to resend. Try again.");
+          })
+          .finally(function () {
+            resendBtn.disabled = false;
+            resendBtn.textContent = orig;
+          });
+      });
+    }
   }
 
   // ─── Login ───
@@ -1386,6 +1451,35 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+function downloadReceiptForOrder(order) {
+  // Convert order.items (stored format) to cartRows format
+  var cartRows = [];
+  if (order.items && order.items.length) {
+    cartRows = order.items.map(function (i) {
+      return {
+        product: { name: i.name },
+        qty: i.qty || 0,
+        lineTotal: i.lineTotal || 0,
+        purchaseType: (i.type || "Unit").toLowerCase() === "case" ? "case" : "unit",
+      };
+    });
+  }
+  var details = order.items
+    ? order.items.map(function (i) { return i.name + " x" + (i.qty || 0); }).join(", ")
+    : order.details || "";
+  var addr = [order.barangay, order.apartment, order.city, order.province, order.zip].filter(Boolean).join(", ") || order.deliveryAddress || "";
+  downloadReceipt(
+    "",
+    order.number || "",
+    order.customerName || "",
+    order.contactNumber || "",
+    details,
+    order.total || 0,
+    addr,
+    cartRows
+  );
 }
 
 function downloadReceipt(message, orderNumber, customerName, contactNumber, details, total, deliveryAddress, cartRows) {
@@ -1858,7 +1952,16 @@ function handleOrderLookup() {
         <div><strong>${order.number}</strong><p class="muted">${summaryText(order)}</p></div>
         <span class="status">${order.status}</span>
       </article>
+      <div style="margin-top:12px;text-align:center;">
+        <button class="btn btn-outline btn-sm" type="button" data-dl-receipt="${order.number}" style="font-size:0.8rem;">Download Receipt</button>
+      </div>
     `;
+    var dlBtn = result.querySelector("[data-dl-receipt]");
+    if (dlBtn) {
+      dlBtn.addEventListener("click", function () {
+        downloadReceiptForOrder(order);
+      });
+    }
   }
 
   form.addEventListener("submit", (event) => {
@@ -2189,8 +2292,17 @@ function showOrderDetail(orderNumber) {
       <div style="border-top:1px solid var(--line);padding-top:14px;display:flex;justify-content:space-between;font-family:Bungee,Poppins,sans-serif;font-size:18px;color:var(--amber);">
         <span>Total</span><span>&#8369;${(order.total || 0).toLocaleString()}</span>
       </div>
+      <div style="margin-top:16px;text-align:center;">
+        <button class="btn btn-outline btn-sm" type="button" data-modal-dl-receipt style="font-size:0.8rem;">Download Receipt</button>
+      </div>
     </div>
   `;
+  var dlBtn = content.querySelector("[data-modal-dl-receipt]");
+  if (dlBtn) {
+    dlBtn.addEventListener("click", function () {
+      downloadReceiptForOrder(order);
+    });
+  }
   overlay.hidden = false;
   document.body.style.overflow = "hidden";
 }
