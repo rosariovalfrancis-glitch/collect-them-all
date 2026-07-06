@@ -29,6 +29,10 @@ switch (true) {
         require __DIR__ . '/login.php';
         break;
 
+    case $path === '/api/send-code' || $path === '/api/send-code.php':
+        require __DIR__ . '/send-code.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode([
@@ -39,6 +43,7 @@ switch (true) {
                 'POST /api/upload-image',
                 'POST /api/register',
                 'POST /api/login',
+                'POST /api/send-code',
             ],
         ]);
         break;
