@@ -417,6 +417,34 @@ function initSiteLinks() {
       document.querySelectorAll("[data-gcash-qr]").forEach((el) => {
         el.replaceWith(gcashQrMarkup());
       });
+
+  // Mobile nav toggle — insert hamburger button
+  var nav = document.querySelector(".site-nav");
+  if (nav && !nav.querySelector(".nav-toggle")) {
+    var btn = document.createElement("button");
+    btn.className = "nav-toggle";
+    btn.setAttribute("aria-label", "Menu");
+    btn.innerHTML = "☰";
+    btn.addEventListener("click", function () {
+      nav.classList.toggle("nav-open");
+      btn.classList.toggle("active");
+      btn.innerHTML = nav.classList.contains("nav-open") ? "✕" : "☰";
+    });
+    // Insert before .nav-right or at end of nav
+    var nr = nav.querySelector(".nav-right");
+    if (nr) { nav.insertBefore(btn, nr); }
+    else { nav.appendChild(btn); }
+  }
+
+  // Mobile dropdown toggle — tap to open on touch devices
+  document.querySelectorAll(".nav-dropdown > a").forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      if (window.innerWidth <= 880) {
+        e.preventDefault();
+        this.parentNode.classList.toggle("open");
+      }
+    });
+  });
 }
 
 const peso = new Intl.NumberFormat("en-PH", {
@@ -1172,6 +1200,7 @@ function updateAuthLinks() {
       link.onclick = function (e) {
         e.preventDefault();
         localStorage.removeItem("collectCurrentUser");
+        sessionStorage.removeItem("collectAdminAuth");
         updateAuthLinks();
         updateCartCount();
         if (window.location.pathname.includes("orders.html")) location.reload();
@@ -1185,76 +1214,128 @@ function updateAuthLinks() {
   });
 }
 
+function apiPost(path, body) {
+  if (!API_BASE_URL) return Promise.reject(new Error("API_BASE_URL not set"));
+  return fetch(API_BASE_URL + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(function (r) { return r.json(); });
+}
+
 function handleAuthForms() {
-  const registerForm = document.querySelector("[data-register-form]");
+  var self = this;
+
+  // ─── Register ───
+  var registerForm = document.querySelector("[data-register-form]");
   if (registerForm) {
-    registerForm.addEventListener("submit", (event) => {
+    registerForm.addEventListener("submit", function (event) {
       event.preventDefault();
-      const formData = new FormData(registerForm);
-      const email = formData.get("email").trim().toLowerCase();
-      const users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
-      if (users.some(u => u.email === email)) {
-        showToast("Email is already used.");
-        return;
-      }
-      const user = {
-        name: formData.get("full_name").trim(),
-        email: email,
-        password: formData.get("password") || ""
-      };
-      users.push(user);
-      localStorage.setItem("collectUsers", JSON.stringify(users));
-      saveCurrentUser(user);
-      showToast("Account created. Your orders will appear automatically on the Orders page.");
-      location.href = "index.html";
-    });
-  }
+      var fd = new FormData(registerForm);
+      var name = fd.get("full_name").trim();
+      var email = fd.get("email").trim().toLowerCase();
+      var password = fd.get("password") || "";
 
-  const loginForm = document.querySelector("[data-login-form]");
-  if (loginForm) {
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(loginForm);
-      const email = formData.get("email").trim().toLowerCase();
-      const password = formData.get("password") || "";
+      if (!name || !email || !password) { showToast("All fields are required."); return; }
 
-      // Admin check
-      const storedCreds = JSON.parse(localStorage.getItem("collectAdminCreds") || "null");
-      if ((storedCreds && email === (storedCreds.user || "").trim().toLowerCase() && password === storedCreds.pass) ||
-          (email === "admin" && password === "admin1234")) {
-        sessionStorage.setItem("collectAdminAuth", "true");
-        showToast("Admin logged in.");
-        location.href = "admin/dashboard.html";
-        return;
-      }
+      var btn = registerForm.querySelector("button[type='submit']");
+      if (btn) btn.disabled = true;
 
-      const users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
-      const match = users.find(u => u.email === email);
-      if (!match) {
-        showToast("No account found with this email.");
-        return;
-      }
-      if (!password) {
-        showToast("Please enter a password.");
-        return;
-      }
-      if (match.password) {
-        if (password !== match.password) {
-          showToast("Incorrect password.");
-          return;
+      function finishLogin(u) {
+        var users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
+        if (!users.some(function (x) { return x.email === u.email; })) {
+          users.push({ name: u.name, email: u.email, password: password });
+          localStorage.setItem("collectUsers", JSON.stringify(users));
         }
-      } else {
-        // First-time login for old account — save the password
-        match.password = password;
-        const idx = users.findIndex(u => u.email === email);
-        if (idx !== -1) { users[idx] = match; localStorage.setItem("collectUsers", JSON.stringify(users)); }
+        saveCurrentUser(u);
+        showToast("Account created! Your orders will appear automatically on the Orders page.");
+        location.href = "index.html";
       }
-      const name = match.name || email.split("@")[0];
-      saveCurrentUser({ name, email });
-      showToast("Logged in. Your saved orders will show on the Orders page.");
-      location.href = "index.html";
+
+      function saveLocalFallback() {
+        finishLogin({ name: name, email: email });
+      }
+
+      // Try database first
+      apiPost("/api/register", { name: name, email: email, password: password })
+        .then(function (data) {
+          if (data.success) {
+            finishLogin({ name: data.user.name, email: data.user.email });
+          } else if (data.error && data.error.indexOf("already") !== -1) {
+            showToast(data.error);
+            if (btn) btn.disabled = false;
+          } else {
+            saveLocalFallback();
+          }
+        })
+        .catch(function () {
+          saveLocalFallback();
+        });
     });
   }
+
+  // ─── Login ───
+  var loginForm = document.querySelector("[data-login-form]");
+  if (loginForm) {
+    loginForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var fd = new FormData(loginForm);
+      var email = fd.get("email").trim().toLowerCase();
+      var password = fd.get("password") || "";
+
+      if (!email || !password) { showToast("Please enter email and password."); return; }
+
+      // Try API login first
+      if (API_BASE_URL) {
+        apiPost("/api/login", { email: email, password: password })
+          .then(function (data) {
+            if (data.success) {
+              var user = data.user;
+              saveCurrentUser({ name: user.name, email: user.email });
+              if (user.is_admin) {
+                sessionStorage.setItem("collectAdminAuth", "true");
+                showToast("Admin logged in.");
+                location.href = "admin/dashboard.html";
+              } else {
+                showToast("Logged in. Your saved orders will show on the Orders page.");
+                location.href = "index.html";
+              }
+            } else {
+              showToast(data.error || "Login failed.");
+            }
+          })
+          .catch(function () {
+            // Backend unreachable — fall back to localStorage
+            doLocalLogin(email, password);
+          });
+      } else {
+        doLocalLogin(email, password);
+      }
+    });
+  }
+}
+
+function doLocalLogin(email, password) {
+  var users = JSON.parse(localStorage.getItem("collectUsers") || "[]");
+  var match = users.find(function (u) { return u.email === email; });
+  if (!match) {
+    showToast("No account found with this email.");
+    return;
+  }
+  if (match.password && password !== match.password) {
+    showToast("Incorrect password.");
+    return;
+  }
+  // First-time login for old account — save password
+  if (!match.password) {
+    match.password = password;
+    var idx = users.findIndex(function (u) { return u.email === email; });
+    if (idx !== -1) { users[idx] = match; localStorage.setItem("collectUsers", JSON.stringify(users)); }
+  }
+  var name = match.name || email.split("@")[0];
+  saveCurrentUser({ name: name, email: email });
+  showToast("Logged in. Your saved orders will show on the Orders page.");
+  location.href = "index.html";
 }
 
 function getOrders() {
