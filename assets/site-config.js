@@ -8,7 +8,7 @@ function showToast(msg) {
 
 window.SITE_CONFIG = {
   messengerUrl: "https://m.me/YourPageName",
-  apiBaseUrl: "https://your-railway-url.up.railway.app",
+  apiBaseUrl: "https://collect-them-all-production.up.railway.app",
   featuredExpansion: {
     id: "chaos-rising",
     name: "Chaos Rising",
