@@ -1,3 +1,4 @@
+/* ===================== ADMIN NAV ===================== */
 .admin-tabs {
   display: flex;
   gap: 8px;
@@ -17,10 +18,27 @@
   border-color: var(--amber);
 }
 
+/* ===================== SECTIONS ===================== */
 .admin-section {
-  margin-bottom: 32px;
+  margin-bottom: 48px;
+  padding-bottom: 24px;
 }
 
+.admin-section h2 {
+  font-family: Bungee, Poppins, sans-serif;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-section h3 {
+  font-family: Bungee, Poppins, sans-serif;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+
+/* ===================== TABLE ===================== */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -28,12 +46,12 @@
 }
 
 .admin-table thead {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.04);
 }
 
 .admin-table th {
   text-align: left;
-  padding: 12px 12px;
+  padding: 14px 14px;
   color: var(--muted);
   font-size: 0.72rem;
   letter-spacing: 1px;
@@ -43,9 +61,13 @@
 }
 
 .admin-table td {
-  padding: 12px 12px;
+  padding: 14px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
+}
+
+.admin-table tbody tr {
+  transition: background 0.15s;
 }
 
 .admin-table tbody tr:hover {
@@ -60,16 +82,117 @@
   opacity: 0.5;
 }
 
+/* ===================== FORMS ===================== */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
+.admin-form .field,
+.admin-form .select {
+  min-height: 44px;
+}
+
+.admin-form textarea.field {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+.admin-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form button[type="submit"] {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+/* ===================== ADMIN SELECT DROPDOWN (purple glass) ===================== */
+.admin-section .select,
+[data-admin-panel] .select {
+  background: rgba(20, 10, 40, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+  border-radius: 10px;
+  color: #f0f0f0;
+  padding: 10px 40px 10px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-section select.select,
+[data-admin-panel] select.select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c4a0ff' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+
+.admin-section .select:hover,
+[data-admin-panel] .select:hover {
+  border-color: rgba(124, 58, 237, 0.5) !important;
+}
+
+.admin-section .select:focus,
+[data-admin-panel] .select:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2) !important;
+}
+
+.admin-section .select option,
+[data-admin-panel] .select option {
+  background: rgba(20, 10, 40, 0.97) !important;
+  color: #f0f0f0;
+  padding: 8px 12px;
+}
+
+.admin-section .select option:checked,
+[data-admin-panel] .select option:checked {
+  background: rgba(124, 58, 237, 0.4) !important;
+}
+
+/* ===================== ADMIN FIELD FOCUS ===================== */
+.admin-section .field:focus,
+[data-admin-panel] .field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+/* ===================== ADMIN FORM GRID ===================== */
 .admin-prod-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
 }
 
 .admin-prod-form .field,
 .admin-prod-form .select,
 .admin-prod-form .textarea {
-  min-height: 40px;
+  min-height: 42px;
 }
 
 .admin-prod-form .textarea {
@@ -81,23 +204,18 @@
   justify-self: start;
 }
 
-@media (max-width: 700px) {
-  .admin-prod-form {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ===================== ADMIN SEARCH BAR ===================== */
 .admin-search-wrap {
   position: relative;
   z-index: 100;
+  margin-bottom: 8px;
 }
 
 .admin-search-input {
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--line);
   color: #fff;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: 12px;
   font-size: 0.9rem;
   width: 100%;
@@ -117,26 +235,27 @@
   left: 0;
   right: 0;
   max-width: 500px;
-  background: rgba(20, 10, 40, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--line);
+  background: rgba(20, 10, 40, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(124, 58, 237, 0.3);
   border-radius: 12px;
-  margin-top: 4px;
-  max-height: 320px;
+  margin-top: 6px;
+  max-height: 340px;
   overflow-y: auto;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
 }
 
 .admin-search-list {
-  padding: 4px;
+  padding: 6px;
 }
 
 .admin-search-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: transparent;
   border: none;
   color: #fff;
@@ -148,18 +267,19 @@
 }
 
 .admin-search-item:hover {
-  background: rgba(245,194,0,0.1);
+  background: rgba(124, 58, 237, 0.2);
 }
 
 .admin-search-type {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--amber);
   background: rgba(245,194,0,0.15);
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .admin-search-label {
@@ -177,7 +297,7 @@
 }
 
 .admin-search-empty {
-  padding: 16px;
+  padding: 18px;
   text-align: center;
   color: var(--muted);
   font-size: 0.85rem;
@@ -186,33 +306,39 @@
 /* ===================== ORDER STATUS FILTER TABS ===================== */
 .admin-order-filters {
   display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .admin-order-filters .btn {
   font-size: 0.78rem;
-  padding: 6px 14px;
-  min-height: 32px;
+  padding: 8px 16px;
+  min-height: 34px;
 }
 
 /* ===================== ADMIN STATS CARDS ===================== */
 .admin-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .admin-stats .card.stat {
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-stats .card.stat:hover {
+  border-color: rgba(232, 168, 56, 0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .admin-stats .card.stat .muted {
@@ -221,6 +347,36 @@
 }
 
 .admin-stats .card.stat strong {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   color: var(--amber);
+}
+
+/* ===================== ADMIN LIST (customers, activity) ===================== */
+.admin-list {
+  display: grid;
+  gap: 14px;
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 700px) {
+  .admin-prod-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table {
+    font-size: 0.75rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 8px;
+  }
 }

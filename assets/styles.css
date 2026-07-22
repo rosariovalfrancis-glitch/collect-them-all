@@ -5,6 +5,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --ink: #08080f;
   --panel: rgba(255, 255, 255, 0.04);
   --panel-strong: rgba(255, 255, 255, 0.08);
@@ -21,6 +22,7 @@
 }
 
 html {
+  color-scheme: dark;
   overflow-x: hidden;
   width: 100%;
 }
@@ -110,17 +112,18 @@ textarea {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   list-style: none;
 }
 
 .nav-links a,
 .nav-dropdown > a {
   color: rgba(255, 255, 255, 0.76);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .nav-links a:hover,
@@ -985,8 +988,7 @@ h3 {
 }
 
 .field,
-.textarea,
-.select {
+.textarea {
   width: 100%;
   min-height: 46px;
   border: 1px solid var(--line);
@@ -997,19 +999,32 @@ h3 {
   outline: 0;
 }
 
+.select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(20, 10, 40, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f0f0f0;
+  padding: 11px 13px;
+  outline: 0;
+}
+
 select.select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 14px center;
+  background: rgba(20, 10, 40, 0.85) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f0f0f0' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 14px center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 11px 40px 11px 16px;
 }
-select.select option {
-  background: transparent;
-  color: #fff;
-}
 .select.select-readonly {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(20, 10, 40, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 11px 16px;
   cursor: default;
 }
@@ -1020,7 +1035,54 @@ select.select option {
 }
 
 .select option {
-  color: #111;
+  color: #f0f0f0;
+  background: rgba(30, 20, 50, 0.95);
+}
+.select option:checked {
+  background: rgba(124, 58, 237, 0.4);
+}
+
+select,
+select.select {
+  color-scheme: dark;
+}
+
+/* Custom div-based dropdown (checkout payment) */
+.custom-select-trigger,
+.custom-select-options {
+  background: rgba(20, 10, 40, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(124, 58, 237, 0.25) !important;
+  border-radius: 8px;
+}
+.custom-select-trigger {
+  color: #f0f0f0;
+  padding: 11px 40px 11px 16px;
+  cursor: pointer;
+}
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.custom-select-option {
+  padding: 11px 16px;
+  cursor: pointer;
+  color: #f0f0f0;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+  transition: background 0.15s;
+}
+.custom-select-option:last-child {
+  border-bottom: none;
+}
+.custom-select-option:hover,
+.custom-select-option.highlighted {
+  background: rgba(124, 58, 237, 0.3);
 }
 
 .form-card,
@@ -1706,7 +1768,7 @@ select.select option {
 .receipt-footer {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 24px;
   padding: 16px 24px 20px;
   border-top: 1px solid var(--line);
   background: rgba(0,0,0,0.15);
