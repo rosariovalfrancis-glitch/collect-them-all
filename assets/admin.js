@@ -32,8 +32,10 @@ function switchTab(name) {
     a.classList.toggle("active", a.dataset.adminTabLink === name);
   });
   if (name === "dashboard") renderAdminDashboard();
-  else if (name === "orders") { renderAdminOrders(); setTimeout(() => { document.querySelector("[data-admin-panel='orders']").scrollIntoView({ behavior: "smooth" }); }, 50); }
+  else if (name === "orders") { renderAdminOrdersFiltered(); setTimeout(() => { document.querySelector("[data-admin-panel='orders']").scrollIntoView({ behavior: "smooth" }); }, 50); }
   else if (name === "products") renderAdminProducts();
+  else if (name === "customers") renderAdminCustomers();
+  else if (name === "activity") renderAdminActivityLog();
 }
 
 function initAdminLogout() {
@@ -249,6 +251,7 @@ function renderAdminProducts() {
       const idx = parseInt(btn.dataset.prodIndex);
       const p = products[idx];
       if (p && confirm(`Delete "${p.name}"?`)) {
+        logAdminAction("product_delete", `Deleted product "${p.name}"`, "product", p.id);
         products.splice(idx, 1);
         saveProducts(products);
         renderAdminProducts();
@@ -262,6 +265,7 @@ function renderAdminProducts() {
       const p = products[idx];
       if (!p) return;
       p.featured = p.featured === true ? false : true;
+      logAdminAction("product_featured", `${p.featured ? "Featured" : "Unfeatured"} product "${p.name}"`, "product", p.id);
       saveProducts(products);
       renderAdminProducts();
     });
@@ -285,6 +289,7 @@ function renderAdminProducts() {
       const p = products[idx];
       if (!p) return;
       p.status = p.status === "Unavailable" ? "In Stock" : "Unavailable";
+      logAdminAction("product_status", `Changed "${p.name}" to ${p.status}`, "product", p.id);
       saveProducts(products);
       renderAdminProducts();
     });
@@ -483,8 +488,10 @@ function initAdminProductForm() {
     if (idx >= 0 && idx < products.length) {
       product.id = products[idx].id;
       products[idx] = product;
+      logAdminAction("product_update", `Updated product "${product.name}"`, "product", product.id);
     } else {
       products.push(product);
+      logAdminAction("product_add", `Added new product "${product.name}"`, "product", product.id);
     }
 
     saveProducts(products);
@@ -745,6 +752,291 @@ function renderAdminExpList() {
   });
 }
 
+function getApiBase() {
+  return (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+}
+
+function logAdminAction(actionType, description, targetType, targetId) {
+  var user = getCurrentUser();
+  var email = user ? user.email : "unknown";
+  var apiBase = getApiBase();
+  if (!apiBase) return;
+  fetch(apiBase + "/api/activity-log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      admin_email: email,
+      action_type: actionType,
+      description: description,
+      target_type: targetType || "",
+      target_id: targetId || "",
+    }),
+  }).catch(function () {});
+}
+
+// ===================== CUSTOMER LIST =====================
+function renderAdminCustomers() {
+  var target = document.querySelector("[data-admin-customers-list]");
+  if (!target) return;
+  var apiBase = getApiBase();
+  if (!apiBase) {
+    target.innerHTML = '<p class="muted">API not configured.</p>';
+    return;
+  }
+  target.innerHTML = '<p class="muted">Loading customers...</p>';
+  fetch(apiBase + "/api/customers")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.success || !data.customers || !data.customers.length) {
+        target.innerHTML = '<p class="muted">No customers found.</p>';
+        return;
+      }
+      var html = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+        '<h3>All Customers (' + data.customers.length + ')</h3>' +
+        '<input class="field" data-admin-customer-search placeholder="Search by name or email" style="max-width:260px;min-height:38px;">' +
+        '</div>';
+      html += '<table class="admin-table"><thead><tr>' +
+        '<th>Name</th><th>Email</th><th>Registered</th><th>Orders</th><th>Total Spent</th><th>Role</th>' +
+        '</tr></thead><tbody>';
+      data.customers.forEach(function (c) {
+        var date = c.created_at ? new Date(c.created_at).toLocaleDateString() : "—";
+        var role = c.is_admin ? '<span class="status" style="background:rgba(124,58,237,0.2);">Admin</span>' : "Customer";
+        html += '<tr>' +
+          '<td><strong>' + (c.name || "—") + '</strong></td>' +
+          '<td>' + (c.email || "—") + '</td>' +
+          '<td>' + date + '</td>' +
+          '<td>' + (c.order_count || 0) + '</td>' +
+          '<td>&#8369;' + (c.total_spent || 0).toLocaleString() + '</td>' +
+          '<td>' + role + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      target.innerHTML = html;
+
+      var searchInput = target.querySelector("[data-admin-customer-search]");
+      if (searchInput) {
+        searchInput.addEventListener("input", function () {
+          var term = searchInput.value.trim().toLowerCase();
+          target.querySelectorAll("tbody tr").forEach(function (row) {
+            row.hidden = term && !row.textContent.toLowerCase().includes(term);
+          });
+        });
+      }
+    })
+    .catch(function (err) {
+      target.innerHTML = '<p class="muted">Failed to load customers: ' + err.message + '</p>';
+    });
+}
+
+// ===================== ORDER STATUS FILTERS =====================
+function renderAdminOrdersFiltered() {
+  var target = document.querySelector("[data-admin-orders-list]");
+  if (!target) return;
+  var allOrders = getOrders();
+  var filter = window._adminOrderStatusFilter || "all";
+
+  var statusGroups = {
+    all: allOrders,
+    pending: allOrders.filter(function (o) { return o.status === "Waiting for Payment" || o.status === "Deposit Received"; }),
+    processing: allOrders.filter(function (o) { return o.status === "Deposit Verified" || o.status === "Allocation Pending" || o.status === "Allocation Confirmed" || o.status === "Preparing"; }),
+    shipped: allOrders.filter(function (o) { return o.status === "Shipped"; }),
+    delivered: allOrders.filter(function (o) { return o.status === "Delivered"; }),
+    cancelled: allOrders.filter(function (o) { return o.status === "Cancelled"; }),
+  };
+
+  var tabs = [
+    { key: "all", label: "All", count: statusGroups.all.length },
+    { key: "pending", label: "Pending", count: statusGroups.pending.length },
+    { key: "processing", label: "Processing", count: statusGroups.processing.length },
+    { key: "shipped", label: "Shipped", count: statusGroups.shipped.length },
+    { key: "delivered", label: "Delivered", count: statusGroups.delivered.length },
+    { key: "cancelled", label: "Cancelled", count: statusGroups.cancelled.length },
+  ];
+
+  var html = '<div class="admin-order-filters" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">';
+  tabs.forEach(function (t) {
+    var active = filter === t.key ? "btn-yellow" : "btn-outline";
+    html += '<button class="btn btn-sm ' + active + '" data-order-status-filter="' + t.key + '">' + t.label + ' (' + t.count + ')</button>';
+  });
+  html += '</div>';
+
+  var list = statusGroups[filter] || statusGroups.all;
+
+  if (!list.length) {
+    html += '<p class="muted">No orders in this category.</p>';
+    target.innerHTML = html;
+    bindOrderStatusFilters(target);
+    return;
+  }
+
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+    '<h2>' + tabs.find(function (t) { return t.key === filter; }).label + ' Orders</h2>' +
+    '<input class="field" data-admin-order-search placeholder="Search by order# or name" style="max-width:260px;min-height:38px;">' +
+    '</div>';
+
+  html += '<table class="admin-table"><thead><tr>' +
+    '<th>Order#</th><th>Customer</th><th>Contact</th><th>Items</th><th>Ship to</th><th>Total</th><th>Status</th><th>Action</th>' +
+    '</tr></thead><tbody>' +
+    list.map(buildOrderRow).join("") +
+    '</tbody></table>';
+
+  target.innerHTML = html;
+  bindOrderStatusFilters(target);
+  initAdminOrderSearch(target);
+}
+
+function bindOrderStatusFilters(scope) {
+  scope.querySelectorAll("[data-order-status-filter]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      window._adminOrderStatusFilter = btn.dataset.orderStatusFilter;
+      renderAdminOrdersFiltered();
+    });
+  });
+}
+
+// ===================== ACTIVITY LOG =====================
+function renderAdminActivityLog() {
+  var target = document.querySelector("[data-admin-activity-log]");
+  if (!target) return;
+  var apiBase = getApiBase();
+  if (!apiBase) {
+    target.innerHTML = '<p class="muted">API not configured.</p>';
+    return;
+  }
+  target.innerHTML = '<p class="muted">Loading activity log...</p>';
+  fetch(apiBase + "/api/activity-log?limit=200")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.success || !data.logs || !data.logs.length) {
+        target.innerHTML = '<p class="muted">No activity recorded yet.</p>';
+        return;
+      }
+      var html = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+        '<h3>Recent Activity (' + data.logs.length + ' entries)</h3>' +
+        '<input class="field" data-admin-log-search placeholder="Search activity..." style="max-width:260px;min-height:38px;">' +
+        '</div>';
+      html += '<table class="admin-table"><thead><tr>' +
+        '<th>Time</th><th>Admin</th><th>Action</th><th>Description</th><th>Target</th>' +
+        '</tr></thead><tbody>';
+      data.logs.forEach(function (log) {
+        var time = log.created_at ? new Date(log.created_at).toLocaleString() : "—";
+        var target = log.target_type ? log.target_type + (log.target_id ? "#" + log.target_id : "") : "—";
+        html += '<tr>' +
+          '<td style="white-space:nowrap;font-size:0.8rem;">' + time + '</td>' +
+          '<td>' + (log.admin_email || "—") + '</td>' +
+          '<td><span class="status">' + (log.action_type || "—") + '</span></td>' +
+          '<td>' + (log.description || "—") + '</td>' +
+          '<td>' + target + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      target.innerHTML = html;
+
+      var searchInput = target.querySelector("[data-admin-log-search]");
+      if (searchInput) {
+        searchInput.addEventListener("input", function () {
+          var term = searchInput.value.trim().toLowerCase();
+          target.querySelectorAll("tbody tr").forEach(function (row) {
+            row.hidden = term && !row.textContent.toLowerCase().includes(term);
+          });
+        });
+      }
+    })
+    .catch(function (err) {
+      target.innerHTML = '<p class="muted">Failed to load activity log: ' + err.message + '</p>';
+    });
+}
+
+// ===================== ADMIN SEARCH BAR =====================
+function initAdminSearch() {
+  var input = document.querySelector("[data-admin-search]");
+  var resultsDiv = document.querySelector("[data-admin-search-results]");
+  if (!input || !resultsDiv) return;
+
+  var debounceTimer;
+  input.addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+    var term = input.value.trim();
+    if (term.length < 2) {
+      resultsDiv.style.display = "none";
+      resultsDiv.innerHTML = "";
+      return;
+    }
+    debounceTimer = setTimeout(function () {
+      performAdminSearch(term.toLowerCase(), resultsDiv);
+    }, 250);
+  });
+
+  input.addEventListener("blur", function () {
+    setTimeout(function () {
+      resultsDiv.style.display = "none";
+    }, 200);
+  });
+  input.addEventListener("focus", function () {
+    if (input.value.trim().length >= 2 && resultsDiv.innerHTML) {
+      resultsDiv.style.display = "";
+    }
+  });
+}
+
+function performAdminSearch(term, target) {
+  var results = [];
+
+  // Search orders
+  var allOrders = getOrders();
+  allOrders.forEach(function (o) {
+    var text = [o.number, o.customerName, o.contactNumber, o.status, o.details].join(" ").toLowerCase();
+    if (text.includes(term)) {
+      results.push({
+        type: "Order",
+        label: o.number + " — " + (o.customerName || "Unknown"),
+        detail: o.status,
+        tab: "orders",
+      });
+    }
+  });
+
+  // Search products
+  products.forEach(function (p) {
+    var text = [p.name, p.category, p.status, p.set].join(" ").toLowerCase();
+    if (text.includes(term)) {
+      results.push({
+        type: "Product",
+        label: p.name,
+        detail: p.category + " — " + p.status,
+        tab: "products",
+      });
+    }
+  });
+
+  if (!results.length) {
+    target.innerHTML = '<div class="admin-search-empty">No results for "' + term + '"</div>';
+    target.style.display = "";
+    return;
+  }
+
+  var html = '<div class="admin-search-list">';
+  results.slice(0, 20).forEach(function (r) {
+    html += '<button class="admin-search-item" data-admin-search-goto="' + r.tab + '">' +
+      '<span class="admin-search-type">' + r.type + '</span> ' +
+      '<span class="admin-search-label">' + r.label + '</span> ' +
+      '<span class="admin-search-detail">' + r.detail + '</span>' +
+      '</button>';
+  });
+  html += '</div>';
+  target.innerHTML = html;
+  target.style.display = "";
+
+  target.querySelectorAll("[data-admin-search-goto]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      switchTab(btn.dataset.adminSearchGoto);
+      target.style.display = "none";
+      target.innerHTML = "";
+      input.value = "";
+    });
+  });
+}
+
 function clearAllData() {
   if (!confirm("Reset ALL data? This will wipe orders, products, accounts, cart, and expansions. This cannot be undone.")) return;
   localStorage.removeItem("collectOrders");
@@ -777,9 +1069,12 @@ document.addEventListener("change", (e) => {
     const all = getOrders();
     const order = all.find((o) => o.number === orderSel.dataset.order);
     if (order) {
+      const oldStatus = order.status;
       order.status = orderSel.value;
       localStorage.setItem("collectOrders", JSON.stringify(all));
+      logAdminAction("order_status", `Changed order ${order.number} from "${oldStatus}" to "${order.status}"`, "order", order.number);
       renderAdminDashboard();
+      renderAdminOrdersFiltered();
     }
     return;
   }
@@ -789,6 +1084,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAdminLogout();
   initAdminNavTabs();
   initAdminProductForm();
+  initAdminSearch();
 
   // One-time cleanup: remove stale featured flags set by a previous bug
   let cleaned = false;
@@ -803,7 +1099,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (requireAdmin()) {
     autoClosePreOrders();
     renderAdminDashboard();
-    renderAdminOrders();
+    renderAdminOrdersFiltered();
     renderAdminProducts();
   }
 });

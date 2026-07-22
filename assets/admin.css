@@ -86,3 +86,141 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===================== ADMIN SEARCH BAR ===================== */
+.admin-search-wrap {
+  position: relative;
+  z-index: 100;
+}
+
+.admin-search-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--line);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 500px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245,194,0,0.15);
+}
+
+.admin-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-width: 500px;
+  background: rgba(20, 10, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-top: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.admin-search-list {
+  padding: 4px;
+}
+
+.admin-search-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.admin-search-item:hover {
+  background: rgba(245,194,0,0.1);
+}
+
+.admin-search-type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--amber);
+  background: rgba(245,194,0,0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.admin-search-label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-search-detail {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.admin-search-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ===================== ORDER STATUS FILTER TABS ===================== */
+.admin-order-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-order-filters .btn {
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  min-height: 32px;
+}
+
+/* ===================== ADMIN STATS CARDS ===================== */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-stats .card.stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-stats .card.stat .muted {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.admin-stats .card.stat strong {
+  font-size: 1.4rem;
+  color: var(--amber);
+}
