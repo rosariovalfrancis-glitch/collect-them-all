@@ -33,6 +33,14 @@ switch (true) {
         require __DIR__ . '/send-code.php';
         break;
 
+    case $path === '/api/customers' || $path === '/api/customers.php':
+        require __DIR__ . '/customers.php';
+        break;
+
+    case $path === '/api/activity-log' || $path === '/api/activity-log.php':
+        require __DIR__ . '/activity-log.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode([
@@ -44,6 +52,8 @@ switch (true) {
                 'POST /api/register',
                 'POST /api/login',
                 'POST /api/send-code',
+                'GET /api/customers',
+                'GET|POST /api/activity-log',
             ],
         ]);
         break;
