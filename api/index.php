@@ -37,10 +37,6 @@ switch (true) {
         require __DIR__ . '/customers.php';
         break;
 
-    case $path === '/api/setup-db' || $path === '/api/setup-db.php':
-        require __DIR__ . '/setup-db.php';
-        break;
-
     case $path === '/api/orders' || $path === '/api/orders.php':
         require __DIR__ . '/orders.php';
         break;
