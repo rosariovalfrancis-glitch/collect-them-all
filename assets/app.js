@@ -680,15 +680,22 @@ function renderFeaturedExpansion() {
   const bannerClass = is30th ? "exp-banner exp-banner-anniversary" : "exp-banner";
   target.innerHTML = `
     <div class="${bannerClass}">
-      ${is30th ? `<div class="exp-anniversary-ribbon">Celebrating 30 Years of the Pokémon TCG</div>` : ""}
+      ${is30th ? `
+      <div class="anniversary-sparkles">
+        <span class="sparkle s1"></span><span class="sparkle s2"></span><span class="sparkle s3"></span>
+        <span class="sparkle s4"></span><span class="sparkle s5"></span><span class="sparkle s6"></span>
+        <span class="sparkle s7"></span><span class="sparkle s8"></span>
+      </div>
+      ` : ""}
       <div class="exp-banner-inner">
+        ${is30th ? `<div class="anniversary-tagline">The First Worldwide Simultaneous Launch</div>` : ""}
         <div class="exp-badge${is30th ? " exp-badge-anniversary" : ""}">${tagline}</div>
-        <h2 class="exp-title">${name}</h2>
+        <h2 class="exp-title${is30th ? " exp-title-anniversary" : ""}">${name}</h2>
         <p class="exp-desc">${desc}</p>
         <div class="exp-actions">
-          <a class="btn btn-primary" href="shop.html?set=${encodeURIComponent(setFilter)}">View All Products</a>
-          <a class="btn btn-outline" href="sets.html?set=${setId}">View All Cards</a>
-          <span class="exp-release">Released ${releaseDate}</span>
+          <a class="btn btn-primary${is30th ? " btn-anniversary" : ""}" href="shop.html?set=${encodeURIComponent(setFilter)}">Pre-Order Now</a>
+          <a class="btn btn-outline${is30th ? " btn-anniversary-outline" : ""}" href="sets.html?set=${setId}">View All Cards</a>
+          <span class="exp-release">Releases ${releaseDate}</span>
         </div>
       </div>
       <div class="exp-trailer-wrap">
