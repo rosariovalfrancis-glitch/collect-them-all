@@ -46,17 +46,18 @@ try {
     // 1) Insert the order
     $stmt = $db->prepare('
         INSERT INTO orders
-            (number, customer_name, contact_number, customer_email,
+            (number, user_id, customer_name, contact_number, customer_email,
              payment_method, delivery_address, province, city,
-             barangay, apartment, zip, notes, total, status)
+             barangay, apartment, zip, notes, total, status, has_pre_order)
         VALUES
-            (:number, :customer_name, :contact_number, :customer_email,
+            (:number, :user_id, :customer_name, :contact_number, :customer_email,
              :payment_method, :delivery_address, :province, :city,
-             :barangay, :apartment, :zip, :notes, :total, :status)
+             :barangay, :apartment, :zip, :notes, :total, :status, :has_pre_order)
     ');
 
     $stmt->execute([
         ':number'           => $orderNumber,
+        ':user_id'          => $input['userId'] ?? null,
         ':customer_name'    => $input['customerName'],
         ':contact_number'   => $input['contactNumber'] ?? '',
         ':customer_email'   => $input['customerEmail'] ?? '',
@@ -70,6 +71,7 @@ try {
         ':notes'            => $input['notes'] ?? '',
         ':total'            => (int) $input['total'],
         ':status'           => 'Waiting for Payment',
+        ':has_pre_order'    => !empty($input['hasPreOrder']) ? 1 : 0,
     ]);
 
     // 2) Insert each line item

@@ -37,8 +37,12 @@ switch (true) {
         require __DIR__ . '/customers.php';
         break;
 
-    case $path === '/api/activity-log' || $path === '/api/activity-log.php':
-        require __DIR__ . '/activity-log.php';
+    case $path === '/api/setup-db' || $path === '/api/setup-db.php':
+        require __DIR__ . '/setup-db.php';
+        break;
+
+    case $path === '/api/orders' || $path === '/api/orders.php':
+        require __DIR__ . '/orders.php';
         break;
 
     default:
@@ -53,7 +57,8 @@ switch (true) {
                 'POST /api/login',
                 'POST /api/send-code',
                 'GET /api/customers',
-                'GET|POST /api/activity-log',
+                'POST /api/setup-db',
+                'PATCH /api/orders',
             ],
         ]);
         break;

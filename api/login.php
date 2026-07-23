@@ -38,6 +38,7 @@ if (!password_verify($pass, $user['password'])) {
 echo json_encode([
     'success' => true,
     'user'    => [
+        'id'       => (int) $user['id'],
         'name'     => $user['name'],
         'email'    => $user['email'],
         'is_admin' => (int) $user['is_admin'],
