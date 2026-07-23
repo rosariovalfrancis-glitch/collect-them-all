@@ -1058,20 +1058,23 @@ h3 {
 
 .toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 24px;
   align-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 8px 10px;
 }
 
 .toolbar .field {
-  flex: 1 1 180px;
-  min-width: 130px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .toolbar .select {
-  flex: 0 0 auto;
-  min-width: 110px;
+  flex: 0 1 auto;
+  min-width: 0;
   width: auto;
 }
 

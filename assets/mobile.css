@@ -324,15 +324,16 @@
 /* --- Toolbar --- */
 @media (max-width: 880px) {
   .toolbar {
-    flex-direction: column;
-    gap: 8px;
-    padding: 0 16px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 10px;
   }
-  .toolbar .field,
+  .toolbar .field {
+    flex: 1 1 100%;
+  }
   .toolbar .select {
-    width: 100%;
-    flex: none;
-    min-width: 0;
+    flex: 1 1 calc(50% - 6px);
   }
 }
 
