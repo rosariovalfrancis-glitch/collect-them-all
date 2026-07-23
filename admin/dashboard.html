@@ -7,7 +7,7 @@
   <meta name="description" content="Collect Them All admin panel - manage orders, products, and your Pokemon TCG shop.">
   <title>Admin - Collect Them All</title>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/styles.css?v=9">
+  <link rel="stylesheet" href="../assets/styles.css?v=10">
   <link rel="stylesheet" href="../assets/admin.css?v=2">
   <link rel="stylesheet" href="../assets/mobile.css?v=2">
 </head>
@@ -25,7 +25,6 @@
         <li><a href="#" data-admin-tab-link="orders">Orders</a></li>
         <li><a href="#" data-admin-tab-link="products">Products</a></li>
         <li><a href="#" data-admin-tab-link="customers">Customers</a></li>
-        <li><a href="#" data-admin-tab-link="activity">Activity Log</a></li>
         <li><a href="#" data-admin-tab-link="home">Settings</a></li>
       </ul>
       <div class="nav-actions-wrap">
@@ -38,17 +37,17 @@
   <main class="page-shell">
     <div data-admin-page>
 
-      <!-- Admin Search Bar -->
-      <div class="admin-search-wrap" data-admin-search-wrap>
-        <input type="text" class="field admin-search-input" data-admin-search placeholder="Search orders, customers, products..." style="width:100%;max-width:500px;margin-bottom:20px;">
-        <div class="admin-search-results" data-admin-search-results style="display:none;"></div>
-      </div>
-
       <header class="page-header">
         <div class="section-label">Owner Dashboard</div>
         <h1 class="page-title">Admin Panel</h1>
         <p class="page-subtitle">Manage your Pokemon TCG shop, orders, and customers.</p>
       </header>
+
+      <!-- Admin Search Bar -->
+      <div class="admin-search-wrap" data-admin-search-wrap>
+        <input type="text" class="field admin-search-input" data-admin-search placeholder="Search orders, customers, products..." style="width:100%;max-width:500px;margin-bottom:20px;">
+        <div class="admin-search-results" data-admin-search-results style="display:none;"></div>
+      </div>
 
       <!-- ===================== DASHBOARD TAB ===================== -->
       <section data-admin-panel="dashboard">
@@ -116,6 +115,10 @@
             <label>Set Name
               <input class="field" name="set_name" placeholder="e.g. Scarlet & Violet">
             </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" name="featured" style="width:18px;height:18px;">
+              <span>Featured on Homepage</span>
+            </label>
             <label>Closes At (Pre-Order)
               <input class="field" name="closes_at" type="datetime-local">
             </label>
@@ -133,14 +136,6 @@
         <div class="admin-section">
           <h2>Customers</h2>
           <div data-admin-customers-list></div>
-        </div>
-      </section>
-
-      <!-- ===================== ACTIVITY LOG TAB ===================== -->
-      <section data-admin-panel="activity" hidden>
-        <div class="admin-section">
-          <h2>Activity Log</h2>
-          <div data-admin-activity-log></div>
         </div>
       </section>
 
