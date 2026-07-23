@@ -751,6 +751,42 @@ h3 {
   pointer-events: none;
 }
 
+.exp-banner-anniversary {
+  background: linear-gradient(135deg, #1a1400 0%, #2d2000 30%, #3d2e00 60%, #1a1400 100%) !important;
+  border-color: rgba(184, 134, 11, 0.25) !important;
+}
+
+.exp-banner-anniversary::before {
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.12), transparent 65%) !important;
+}
+
+.exp-banner-anniversary::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(184, 134, 11, 0.15), transparent 50%, rgba(184, 134, 11, 0.1));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.exp-anniversary-ribbon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #1a1400;
+  background: linear-gradient(90deg, #b8860b, #daa520, #ffd700, #daa520, #b8860b);
+  border-radius: 16px 16px 0 0;
+  z-index: 2;
+}
+
 .exp-banner-inner {
   display: flex;
   flex-direction: column;
@@ -770,6 +806,11 @@ h3 {
   font-weight: 900;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+.exp-badge-anniversary {
+  background: linear-gradient(135deg, #b8860b, #daa520);
+  color: #1a1400;
 }
 
 .exp-title {
@@ -1635,12 +1676,9 @@ select.select {
 }
 
 .product-image .badge-soldout {
-  bottom: 14px;
-  top: auto;
-  background: #555;
-  color: #ccc;
-  font-size: 0.55rem;
-  padding: 3px 8px;
+  background: rgba(183, 28, 28, 0.88);
+  color: #ffd5d4;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .timer-text {

@@ -676,10 +676,13 @@ function renderFeaturedExpansion() {
     if (m) trailerUrl = "https://youtu.be/" + m[1];
   }
   if (!name) return;
+  const is30th = setId === "30th-celebration";
+  const bannerClass = is30th ? "exp-banner exp-banner-anniversary" : "exp-banner";
   target.innerHTML = `
-    <div class="exp-banner">
+    <div class="${bannerClass}">
+      ${is30th ? `<div class="exp-anniversary-ribbon">Celebrating 30 Years of the Pokémon TCG</div>` : ""}
       <div class="exp-banner-inner">
-        <div class="exp-badge">${tagline}</div>
+        <div class="exp-badge${is30th ? " exp-badge-anniversary" : ""}">${tagline}</div>
         <h2 class="exp-title">${name}</h2>
         <p class="exp-desc">${desc}</p>
         <div class="exp-actions">
@@ -2050,6 +2053,8 @@ function renderSetsPage() {
 }
 
 const SET_GRADIENTS = {
+  "30th-celebration": "linear-gradient(135deg, #1a1400 0%, #3d2e00 30%, #b8860b 60%, #1a1400 100%)",
+  "pitch-black": "linear-gradient(135deg, #0a0010 0%, #1a0028 30%, #2d0045 60%, #0a0010 100%)",
   "chaos-rising": "linear-gradient(135deg, #1a0a2e 0%, #2d1045 30%, #4a1a6e 60%, #1a0a2e 100%)",
   "perfect-order": "linear-gradient(135deg, #0a1628 0%, #0f2847 30%, #1a3d6e 60%, #0a1628 100%)",
   "ascended-heroes": "linear-gradient(135deg, #1a1000 0%, #3d2a00 30%, #6e4a00 60%, #1a1000 100%)",

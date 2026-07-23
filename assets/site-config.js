@@ -10,16 +10,42 @@ window.SITE_CONFIG = {
   messengerUrl: "https://m.me/YourPageName",
   apiBaseUrl: "https://collect-them-all-production.up.railway.app",
   featuredExpansion: {
-    id: "chaos-rising",
-    name: "Chaos Rising",
-    tagline: "Available Now",
-    description: "The hustle and bustle of the city turns into havoc as Mega Floette ex brings turmoil to the streets! Filled with courage and determination, Mega Greninja ex gathers other powerful Mega Evolution Pokemon ex, including Mega Pyroar ex and Mega Dragalge ex, to ward off this growing threat.",
-    trailerId: "adNied8CUfE",
-    trailerUrl: "https://youtu.be/adNied8CUfE",
-    setFilter: "Chaos Rising",
-    releaseDate: "May 22, 2026"
+    id: "30th-celebration",
+    name: "30th Celebration",
+    tagline: "Pre-Order Now",
+    description: "Celebrating 30 years of the Pokémon TCG! The first-ever expansion to launch simultaneously worldwide features all foil cards, 30 classic returning cards with stunning foil treatments, and the all-new Futuristic rare card rarity illustrated by YOSHIROTTEN. Every booster pack includes one of 30 unique foil Pikachu cards, each by a different artist.",
+    trailerId: "05w9UVH6zoQ",
+    trailerUrl: "https://youtu.be/05w9UVH6zoQ",
+    setFilter: "30th Celebration",
+    releaseDate: "September 16, 2026"
   },
   expansions: [
+    {
+      id: "30th-celebration",
+      name: "30th Celebration",
+      apiSetId: "30th",
+      imagePrefix: "30th",
+      releaseDate: "September 16, 2026",
+      tagline: "Pre-Order Now",
+      description: "Celebrating 30 years of the Pokémon TCG! The first-ever expansion to launch simultaneously worldwide features all foil cards, 30 classic returning cards with stunning foil treatments, and the all-new Futuristic rare card rarity illustrated by YOSHIROTTEN. Every booster pack includes one of 30 unique foil Pikachu cards, each by a different artist.",
+      trailerId: "05w9UVH6zoQ",
+      trailerUrl: "https://youtu.be/05w9UVH6zoQ",
+      productSet: "30th Celebration",
+      cardCount: 180
+    },
+    {
+      id: "pitch-black",
+      name: "Pitch Black",
+      apiSetId: "me5",
+      imagePrefix: "me5",
+      releaseDate: "July 17, 2026",
+      tagline: "Available Now",
+      description: "Twinkling city lights and a starry sky become obscured in darkness as Mega Darkrai ex arrives with mystery and malice! But Mega Zeraora ex fights back with thunderous strikes of lightning, leading the way for Mega Chandelure ex, Mega Excadrill ex, and more to join the fray. Shadows deepen and nightmares become reality.",
+      trailerId: "MLewz9UacMQ",
+      trailerUrl: "https://youtu.be/MLewz9UacMQ",
+      productSet: "Pitch Black",
+      cardCount: 120
+    },
     {
       id: "chaos-rising",
       name: "Chaos Rising",

@@ -275,13 +275,7 @@
     padding: 3px 7px;
     font-size: 0.55rem;
   }
-  .product-image .badge-soldout {
-    bottom: 8px;
-    width: auto;
-    max-width: calc(100% - 16px);
-    text-align: center;
-    justify-content: center;
-  }
+
   .countdown-badge {
     top: 8px;
     right: 8px;
