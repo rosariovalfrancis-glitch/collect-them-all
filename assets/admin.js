@@ -35,7 +35,6 @@ function switchTab(name) {
   else if (name === "orders") { renderAdminOrdersFiltered(); setTimeout(() => { document.querySelector("[data-admin-panel='orders']").scrollIntoView({ behavior: "smooth" }); }, 50); }
   else if (name === "products") renderAdminProducts();
   else if (name === "customers") renderAdminCustomers();
-  else if (name === "activity") renderAdminActivityLog();
 }
 
 function initAdminLogout() {
@@ -67,10 +66,21 @@ function renderAdminDashboard() {
   if (!target) return;
   const allOrders = getOrders();
   const pendingOrders = allOrders.filter((o) => o.status === "Waiting for Payment" || o.status === "Deposit Received");
+  const completedOrders = allOrders.filter((o) => o.status === "Delivered" || o.status === "Shipped");
   const totalSales = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+  // Today's orders (based on createdAt)
+  const today = new Date().toISOString().slice(0, 10);
+  const todayOrders = allOrders.filter((o) => {
+    if (o.createdAt) return o.createdAt.slice(0, 10) === today;
+    return false;
+  });
+
   target.innerHTML = `
     <div class="card stat"><span class="muted">Total Orders</span><strong>${allOrders.length}</strong></div>
-    <div class="card stat"><span class="muted">Pending Payments</span><strong>${pendingOrders.length}</strong></div>
+    <div class="card stat"><span class="muted">Today's Orders</span><strong>${todayOrders.length}</strong></div>
+    <div class="card stat"><span class="muted">Completed</span><strong>${completedOrders.length}</strong></div>
+    <div class="card stat"><span class="muted">Pending</span><strong>${pendingOrders.length}</strong></div>
     <div class="card stat"><span class="muted">Total Sales</span><strong>&#8369;${totalSales.toLocaleString()}</strong></div>
   `;
 
@@ -93,8 +103,14 @@ function renderAdminDashboard() {
 function buildOrderRow(order) {
   const items = order.items ? order.items.map((i) => `${i.name} x${i.qty}`).join(", ") : order.details || "—";
   const total = order.total ? `&#8369;${order.total.toLocaleString()}` : "—";
-  const statuses = ["Waiting for Payment", "Deposit Received", "Deposit Verified", "Allocation Pending", "Allocation Confirmed", "Preparing", "Shipped", "Delivered"];
+  const statuses = ["Waiting for Payment", "Deposit Received", "Deposit Verified", "Allocation Pending", "Allocation Confirmed", "Preparing", "Shipped", "Delivered", "Cancelled"];
   const addr = [order.barangay, order.city, order.province].filter(Boolean).join(", ") || order.deliveryAddress || "—";
+  const isCancelReq = order.status === "Cancellation Requested";
+  const cancelActions = isCancelReq ? `
+    <div style="display:flex;gap:4px;margin-top:6px;">
+      <button class="btn btn-sm btn-outline" data-admin-cancel-approve="${order.number}" style="font-size:0.72rem;color:var(--green);border-color:rgba(34,197,94,0.3);">Approve</button>
+      <button class="btn btn-sm btn-outline" data-admin-cancel-deny="${order.number}" style="font-size:0.72rem;color:var(--red);border-color:rgba(239,83,80,0.3);">Deny</button>
+    </div>` : '';
   return `<tr>
     <td><strong>${order.number}</strong></td>
     <td>${order.customerName || "—"}</td>
@@ -107,6 +123,7 @@ function buildOrderRow(order) {
       <select class="select" data-admin-order-status data-order="${order.number}" style="min-width:100px;padding:4px 8px;font-size:0.78rem;">
         ${statuses.map((s) => `<option value="${s}" ${s === order.status ? "selected" : ""}>${s}</option>`).join("")}
       </select>
+      ${cancelActions}
     </td>
   </tr>`;
 }
@@ -251,7 +268,7 @@ function renderAdminProducts() {
       const idx = parseInt(btn.dataset.prodIndex);
       const p = products[idx];
       if (p && confirm(`Delete "${p.name}"?`)) {
-        logAdminAction("product_delete", `Deleted product "${p.name}"`, "product", p.id);
+
         products.splice(idx, 1);
         saveProducts(products);
         renderAdminProducts();
@@ -265,7 +282,7 @@ function renderAdminProducts() {
       const p = products[idx];
       if (!p) return;
       p.featured = p.featured === true ? false : true;
-      logAdminAction("product_featured", `${p.featured ? "Featured" : "Unfeatured"} product "${p.name}"`, "product", p.id);
+
       saveProducts(products);
       renderAdminProducts();
     });
@@ -289,7 +306,7 @@ function renderAdminProducts() {
       const p = products[idx];
       if (!p) return;
       p.status = p.status === "Unavailable" ? "In Stock" : "Unavailable";
-      logAdminAction("product_status", `Changed "${p.name}" to ${p.status}`, "product", p.id);
+
       saveProducts(products);
       renderAdminProducts();
     });
@@ -314,6 +331,7 @@ function renderAdminProducts() {
         form.querySelector("[name='description']").value = p.description;
         form.querySelector("[name='set_name']").value = p.set;
         form.querySelector("[name='closes_at']").value = toDatetimeLocal(p.closesAt) || "";
+        form.querySelector("[name='featured']").checked = p.featured === true;
         form.querySelector("button[type='submit']").textContent = "Update Product";
         // Rebuild category options based on active filter tab
         const catSel = form.querySelector("[name='category']");
@@ -482,16 +500,15 @@ function initAdminProductForm() {
       image: data.get("image").trim(),
       description: data.get("description").trim(),
       closesAt,
-      closed: isPre ? false : undefined
+      closed: isPre ? false : undefined,
+      featured: data.get("featured") === "on",
     };
 
     if (idx >= 0 && idx < products.length) {
       product.id = products[idx].id;
       products[idx] = product;
-      logAdminAction("product_update", `Updated product "${product.name}"`, "product", product.id);
     } else {
       products.push(product);
-      logAdminAction("product_add", `Added new product "${product.name}"`, "product", product.id);
     }
 
     saveProducts(products);
@@ -756,24 +773,6 @@ function getApiBase() {
   return (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
 }
 
-function logAdminAction(actionType, description, targetType, targetId) {
-  var user = getCurrentUser();
-  var email = user ? user.email : "unknown";
-  var apiBase = getApiBase();
-  if (!apiBase) return;
-  fetch(apiBase + "/api/activity-log", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      admin_email: email,
-      action_type: actionType,
-      description: description,
-      target_type: targetType || "",
-      target_id: targetId || "",
-    }),
-  }).catch(function () {});
-}
-
 // ===================== CUSTOMER LIST =====================
 function renderAdminCustomers() {
   var target = document.querySelector("[data-admin-customers-list]");
@@ -892,59 +891,6 @@ function bindOrderStatusFilters(scope) {
       renderAdminOrdersFiltered();
     });
   });
-}
-
-// ===================== ACTIVITY LOG =====================
-function renderAdminActivityLog() {
-  var target = document.querySelector("[data-admin-activity-log]");
-  if (!target) return;
-  var apiBase = getApiBase();
-  if (!apiBase) {
-    target.innerHTML = '<p class="muted">API not configured.</p>';
-    return;
-  }
-  target.innerHTML = '<p class="muted">Loading activity log...</p>';
-  fetch(apiBase + "/api/activity-log?limit=200")
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (!data.success || !data.logs || !data.logs.length) {
-        target.innerHTML = '<p class="muted">No activity recorded yet.</p>';
-        return;
-      }
-      var html = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
-        '<h3>Recent Activity (' + data.logs.length + ' entries)</h3>' +
-        '<input class="field" data-admin-log-search placeholder="Search activity..." style="max-width:260px;min-height:38px;">' +
-        '</div>';
-      html += '<table class="admin-table"><thead><tr>' +
-        '<th>Time</th><th>Admin</th><th>Action</th><th>Description</th><th>Target</th>' +
-        '</tr></thead><tbody>';
-      data.logs.forEach(function (log) {
-        var time = log.created_at ? new Date(log.created_at).toLocaleString() : "—";
-        var target = log.target_type ? log.target_type + (log.target_id ? "#" + log.target_id : "") : "—";
-        html += '<tr>' +
-          '<td style="white-space:nowrap;font-size:0.8rem;">' + time + '</td>' +
-          '<td>' + (log.admin_email || "—") + '</td>' +
-          '<td><span class="status">' + (log.action_type || "—") + '</span></td>' +
-          '<td>' + (log.description || "—") + '</td>' +
-          '<td>' + target + '</td>' +
-          '</tr>';
-      });
-      html += '</tbody></table>';
-      target.innerHTML = html;
-
-      var searchInput = target.querySelector("[data-admin-log-search]");
-      if (searchInput) {
-        searchInput.addEventListener("input", function () {
-          var term = searchInput.value.trim().toLowerCase();
-          target.querySelectorAll("tbody tr").forEach(function (row) {
-            row.hidden = term && !row.textContent.toLowerCase().includes(term);
-          });
-        });
-      }
-    })
-    .catch(function (err) {
-      target.innerHTML = '<p class="muted">Failed to load activity log: ' + err.message + '</p>';
-    });
 }
 
 // ===================== ADMIN SEARCH BAR =====================
@@ -1072,7 +1018,62 @@ document.addEventListener("change", (e) => {
       const oldStatus = order.status;
       order.status = orderSel.value;
       localStorage.setItem("collectOrders", JSON.stringify(all));
-      logAdminAction("order_status", `Changed order ${order.number} from "${oldStatus}" to "${order.status}"`, "order", order.number);
+      var apiBase = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+      if (apiBase) {
+        fetch(apiBase + "/api/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderNumber: order.number, action: "update_status", status: orderSel.value }),
+        }).catch(function () {});
+      }
+      renderAdminDashboard();
+      renderAdminOrdersFiltered();
+    }
+    return;
+  }
+
+  // Cancel approve
+  const approveBtn = e.target.closest("[data-admin-cancel-approve]");
+  if (approveBtn) {
+    const num = approveBtn.dataset.adminCancelApprove;
+    if (!confirm("Cancel order " + num + "?")) return;
+    var all2 = getOrders();
+    var order2 = all2.find(function (o) { return o.number === num; });
+    if (order2) {
+      order2.status = "Cancelled";
+      localStorage.setItem("collectOrders", JSON.stringify(all2));
+      var apiBase2 = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+      if (apiBase2) {
+        fetch(apiBase2 + "/api/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderNumber: num, action: "cancel_approve" }),
+        }).catch(function () {});
+      }
+      renderAdminDashboard();
+      renderAdminOrdersFiltered();
+    }
+    return;
+  }
+
+  // Cancel deny
+  const denyBtn = e.target.closest("[data-admin-cancel-deny]");
+  if (denyBtn) {
+    const num2 = denyBtn.dataset.adminCancelDeny;
+    var all3 = getOrders();
+    var order3 = all3.find(function (o) { return o.number === num2; });
+    if (order3) {
+      order3.status = "Waiting for Payment";
+      order3.cancelReason = "";
+      localStorage.setItem("collectOrders", JSON.stringify(all3));
+      var apiBase3 = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+      if (apiBase3) {
+        fetch(apiBase3 + "/api/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderNumber: num2, action: "cancel_deny", revertTo: "Waiting for Payment" }),
+        }).catch(function () {});
+      }
       renderAdminDashboard();
       renderAdminOrdersFiltered();
     }
@@ -1085,16 +1086,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initAdminNavTabs();
   initAdminProductForm();
   initAdminSearch();
-
-  // One-time cleanup: remove stale featured flags set by a previous bug
-  let cleaned = false;
-  for (const p of products) {
-    if (p.featured !== undefined) {
-      delete p.featured;
-      cleaned = true;
-    }
-  }
-  if (cleaned) saveProducts(products);
 
   if (requireAdmin()) {
     autoClosePreOrders();

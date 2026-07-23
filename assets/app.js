@@ -1093,9 +1093,12 @@ function renderCartPage() {
   const target = document.querySelector("[data-cart-list]");
   if (!target) return;
   const rows = cartRows();
+  const checkoutBtn = document.querySelector("a[href='checkout.html']");
   if (!rows.length) {
     target.innerHTML = `<div class="card empty-state"><h2>Your cart is empty.</h2><p class="muted">Start with the shop page and add cards you like.</p></div>`;
+    if (checkoutBtn) { checkoutBtn.style.pointerEvents = "none"; checkoutBtn.style.opacity = "0.4"; }
   } else {
+    if (checkoutBtn) { checkoutBtn.style.pointerEvents = ""; checkoutBtn.style.opacity = ""; }
     target.innerHTML = rows.map(({ product, qty, lineTotal, purchaseType }) => {
       if (!product) return "";
       const typeLabel = purchaseType === "case" ? "Case" : "Unit";
@@ -1700,10 +1703,9 @@ function showCheckoutSuccess(orderNumber, customerName, contactNumber, details, 
 
   successSection.innerHTML = `
     <div class="receipt-card" style="max-width:640px;margin:0 auto;font-size:18px;">
-      <div class="receipt-header" style="padding:28px 32px;">
-        <div class="receipt-logo" style="font-size:28px;">Collect Them All</div>
-        <div class="receipt-badge" style="font-size:13px;padding:6px 16px;">ORDER CONFIRMED</div>
-      </div>
+        <div class="receipt-header" style="padding:28px 32px;">
+          <div class="receipt-logo" style="font-size:28px;">Collect Them All</div>
+        </div>
       <div class="receipt-body" style="padding:32px;">
         <div class="receipt-order-number" style="font-size:34px;">#${orderNumber}</div>
         <div class="receipt-divider" style="margin:16px 0;"></div>
@@ -1720,7 +1722,7 @@ function showCheckoutSuccess(orderNumber, customerName, contactNumber, details, 
         <div class="qr-box" style="margin:0 auto;">${gcashQrMarkup()}</div>
         <p class="receipt-pay-instruction" style="font-size:16px;margin-top:12px;">Payment QR will be sent to you directly — send proof on Messenger once paid.</p>
       </div>
-      <div class="receipt-footer" style="padding:20px 32px 24px;">
+      <div class="receipt-footer" style="padding:20px 32px 24px;justify-content:center;">
         <button class="btn btn-outline" type="button" data-download-receipt style="font-size:16px;padding:10px 20px;">Download Receipt</button>
         <a class="btn btn-primary" href="${MESSENGER_URL}" target="_blank" rel="noreferrer" data-messenger-link style="font-size:16px;padding:10px 20px;">Open Messenger</a>
         <a class="btn btn-yellow" href="orders.html?order=${orderNumber}" style="font-size:16px;padding:10px 20px;">Track Order</a>
@@ -1748,6 +1750,21 @@ function showQRLightbox(src) {
 function handleCheckout() {
   const form = document.querySelector("[data-checkout-form]");
   if (!form) return;
+
+  // Block checkout entirely if cart is empty
+  if (!getCart().length) {
+    showToast("Your cart is empty. Redirecting to shop...");
+    setTimeout(function () { location.href = "shop.html"; }, 1200);
+    form.hidden = true;
+    const summaryPanel = document.querySelector(".summary-panel");
+    if (summaryPanel) summaryPanel.hidden = true;
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "card empty-state";
+    emptyMsg.innerHTML = '<h2>Your cart is empty.</h2><p class="muted">Add some products before checking out.</p><a class="btn btn-primary" href="shop.html" style="margin-top:16px;">Go to Shop</a>';
+    const main = document.querySelector(".checkout-main");
+    if (main) main.prepend(emptyMsg);
+    return;
+  }
 
   // Custom payment dropdown
   const paymentWrap = form.querySelector("[data-payment-select]");
@@ -1830,6 +1847,7 @@ function handleCheckout() {
       type: row.purchaseType === "case" ? "Case" : "Unit",
       lineTotal: row.lineTotal || 0
     }));
+    const hasPreOrder = rows.some((row) => row.product && row.product.category === "Pre-Order");
     const details = items.map((i) => `${i.name}`).join(", ");
     const subtotal = rows.reduce((sum, row) => sum + row.lineTotal, 0);
     const total = subtotal + 120;
@@ -1838,6 +1856,8 @@ function handleCheckout() {
       number: orderNumber,
       details,
       items,
+      hasPreOrder,
+      createdAt: new Date().toISOString(),
       status: "Waiting for Payment",
       customerName,
       contactNumber,
@@ -1871,6 +1891,8 @@ function handleCheckout() {
       notes: notes,
       total: total,
       items: items,
+      userId: getCurrentUser()?.id || null,
+      hasPreOrder: hasPreOrder,
     });
   });
 }
@@ -1909,6 +1931,14 @@ function renderAccountOrders() {
     return items.length > 2 ? items.slice(0, 2).join(", ") + `, +${items.length - 2} more` : items.join(", ") || "\u2014";
   }
 
+  const canCancel = function (order) {
+    const blocked = ["Cancelled", "Delivered", "Shipped", "Cancellation Requested"];
+    if (blocked.includes(order.status)) return false;
+    if (order.hasPreOrder) return false;
+    if (order.items && order.items.some(function (i) { return (i.name || "").toLowerCase().includes("pre-order"); })) return false;
+    return true;
+  };
+
   target.innerHTML = `
     <h2>Your Orders</h2>
     <div class="orders-list" style="margin-top:14px;">
@@ -1918,10 +1948,35 @@ function renderAccountOrders() {
           <div><strong>${order.number}</strong><p class="muted">${summaryText(order)}</p></div>
           <span class="status">${order.status}</span>
         </article>
+        ${canCancel(order) ? '<div style="text-align:right;margin-top:-6px;margin-bottom:8px;"><button class="btn btn-outline btn-sm" data-cancel-order="' + order.number + '" style="font-size:0.75rem;color:var(--red);border-color:rgba(239,83,80,0.3);">Cancel Order</button></div>' : ''}
       `;
       }).join("")}
     </div>
   `;
+
+  target.querySelectorAll("[data-cancel-order]").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var num = btn.dataset.cancelOrder;
+      if (!confirm("Are you sure you want to request cancellation for order " + num + "?")) return;
+      var all = getOrders();
+      var order = all.find(function (o) { return o.number === num; });
+      if (order) {
+        order.status = "Cancellation Requested";
+        localStorage.setItem("collectOrders", JSON.stringify(all));
+        var apiBase = (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || "";
+        if (apiBase) {
+          fetch(apiBase + "/api/orders", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderNumber: num, action: "cancel_request" }),
+          }).catch(function () {});
+        }
+        renderAccountOrders();
+        showToast("Cancellation request submitted for " + num + ".");
+      }
+    });
+  });
 }
 
 function handleOrderLookup() {
