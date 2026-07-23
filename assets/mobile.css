@@ -129,11 +129,7 @@
     padding: 16px;
   }
   .receipt-footer {
-    flex-direction: column;
     padding: 14px 16px 18px;
-  }
-  .receipt-footer .btn {
-    width: 100%;
   }
   .receipt-header {
     flex-direction: column;
@@ -236,6 +232,11 @@
     min-height: 160px;
     padding: 12px;
   }
+  .product-image::before {
+    width: 80px;
+    height: 80px;
+    inset: auto -15% -15% auto;
+  }
   .product-image img {
     max-height: 150px;
   }
@@ -276,6 +277,10 @@
   }
   .product-image .badge-soldout {
     bottom: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+    text-align: center;
+    justify-content: center;
   }
   .countdown-badge {
     top: 8px;
@@ -292,6 +297,11 @@
   }
   .product-image {
     min-height: 130px;
+  }
+  .product-image::before {
+    width: 60px;
+    height: 60px;
+    inset: auto -10% -10% auto;
   }
   .product-image img {
     max-height: 120px;
