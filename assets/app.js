@@ -2441,7 +2441,7 @@ renderSetsPage();
   var origUpdate = window.updateCartCount;
   window.updateCartCount = function () {
     if (origUpdate) origUpdate();
-    var c = getCart().reduce(function (s, i) { return s + i.qty; }, 0;
+    var c = getCart().reduce(function (s, i) { return s + i.qty; }, 0);
     document.querySelectorAll("[data-bottom-cart-count]").forEach(function (el) { el.textContent = c; });
   };
 
