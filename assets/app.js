@@ -418,23 +418,7 @@ function initSiteLinks() {
         el.replaceWith(gcashQrMarkup());
       });
 
-  // Mobile nav toggle — insert hamburger button
-  var nav = document.querySelector(".site-nav");
-  if (nav && !nav.querySelector(".nav-toggle")) {
-    var btn = document.createElement("button");
-    btn.className = "nav-toggle";
-    btn.setAttribute("aria-label", "Menu");
-    btn.innerHTML = "☰";
-    btn.addEventListener("click", function () {
-      nav.classList.toggle("nav-open");
-      btn.classList.toggle("active");
-      btn.innerHTML = nav.classList.contains("nav-open") ? "✕" : "☰";
-    });
-    // Insert before .nav-right or at end of nav
-    var nr = nav.querySelector(".nav-right");
-    if (nr) { nav.insertBefore(btn, nr); }
-    else { nav.appendChild(btn); }
-  }
+  // Mobile nav toggle removed — using bottom nav bar instead
 
   // Mobile dropdown toggle — tap to open on touch devices
   document.querySelectorAll(".nav-dropdown > a").forEach(function (link) {
@@ -2397,6 +2381,26 @@ handleAdminForm();
 handleAuthForms();
 handleCheckout();
 handleOrderLookup();
+(function initComboDropdown() {
+  const btn = document.querySelector("[data-combo-btn]");
+  const menu = document.querySelector("[data-combo-menu]");
+  const sort = document.querySelector("[data-sort]");
+  if (!btn || !menu || !sort) return;
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  });
+  menu.querySelectorAll(".combo-sort-option").forEach(function (opt) {
+    opt.addEventListener("click", function () {
+      menu.querySelectorAll(".combo-sort-option").forEach(function (o) { o.classList.remove("active"); });
+      opt.classList.add("active");
+      sort.value = opt.dataset.value;
+      sort.dispatchEvent(new Event("change"));
+      menu.classList.remove("open");
+    });
+  });
+  document.addEventListener("click", function () { menu.classList.remove("open"); });
+})();
 renderAccountOrders();
 toggleGuestLookup();
 updateAuthLinks();

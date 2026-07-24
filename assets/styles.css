@@ -1197,6 +1197,10 @@ h3 {
   outline: none;
 }
 
+.nav-toggle {
+  display: none !important;
+}
+
 .shop-breadcrumb {
   margin-bottom: 20px;
   font-size: 0.85rem;
