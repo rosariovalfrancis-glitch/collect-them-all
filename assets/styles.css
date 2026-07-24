@@ -1070,12 +1070,131 @@ h3 {
 .toolbar .field {
   flex: 1 1 0;
   min-width: 0;
+  width: 0 !important;
 }
 
 .toolbar .select {
-  flex: 0 1 auto;
+  flex: 0 0 180px;
   min-width: 0;
-  width: auto;
+  width: 180px !important;
+}
+
+.toolbar-combo {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.toolbar-combo .combo-select {
+  flex: 0 0 40px;
+  width: 40px;
+  min-width: 0;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.10);
+  border-radius: 0 12px 12px 0;
+  background-color: rgba(20, 10, 40, 0.85);
+  padding: 12px 24px 12px 12px;
+  font-size: 0.9rem;
+  color: transparent;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 12px;
+  overflow: hidden;
+  color-scheme: dark;
+}
+
+.toolbar-combo .combo-select option {
+  color: #ccc;
+  background: #140a28;
+  padding: 4px 8px;
+}
+
+.combo-sort-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.combo-sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 100%;
+  min-height: 46px;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.10);
+  border-radius: 0 12px 12px 0;
+  background: rgba(20, 10, 40, 0.85);
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  padding: 0;
+}
+
+.combo-sort-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+
+.combo-sort-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: #1a0f30;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 6px 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+.combo-sort-menu.open {
+  display: block;
+}
+
+.combo-sort-option {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: #bbb;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.combo-sort-option:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.combo-sort-option.active {
+  color: #f5c518;
+  font-weight: 600;
+}
+
+.toolbar-combo .combo-field {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  border-radius: 12px 0 0 12px;
+  background: transparent;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  color: #fff;
+  outline: none;
 }
 
 .shop-breadcrumb {
